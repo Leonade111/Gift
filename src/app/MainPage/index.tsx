@@ -12,7 +12,7 @@ export default function MainPage() {
               Begin your customized gift!
             </h1>
             <p className="mb-6 max-w-lg text-sm text-gray-600 sm:text-xl md:mb-10 lg:mb-12">
-              If you're unsure about what gift to send, click the button below to start!
+              If you&aposre unsure about what gift to send, click the button below to start!
             </p>
             <div className="flex items-center space-x-5">
               {/* "Let's start!" Button */}
@@ -21,7 +21,7 @@ export default function MainPage() {
                 className="flex items-center rounded-md bg-gradient-to-r from-pink-500 to-orange-600 px-6 py-3 font-semibold text-white shadow-lg
                 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 active:brightness-125 active:shadow-2xl active:bg-gradient-to-r from-orange-500 to-pink-600"
               >
-                Let's start!
+                Let&aposs start!
               </Link>
 
               {/* "View the trend" Button */}
