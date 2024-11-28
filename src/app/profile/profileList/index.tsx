@@ -1,14 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import 
 
-export default function ProfileList({ profiles, onProfileSelect, onAddProfile }) {
+interface Profile {
+  name: string;
+}
+
+interface ProfileListProps {
+  profiles: Profile[];
+  onProfileSelect: (profile: Profile) => void;
+  onAddProfile: () => void;
+  onEditProfile: (profile: Profile) => void; // 添加编辑回调
+  onDeleteProfile: (profile: Profile) => void; // 添加删除回调
+}
+
+export default function ProfileList({
+  profiles,
+  onProfileSelect,
+  onAddProfile,
+  onEditProfile,
+  onDeleteProfile,
+}: ProfileListProps) {
   return (
     <div className="w-1/4 bg-gray-50 p-4">
       <h2 className="text-lg font-semibold mb-6">Profiles</h2>
       <ul className="space-y-4">
-        {profiles.map((profile, index) => (
+        {profiles.map((profile) => (
           <li
             key={profile.name}
             className="flex justify-between items-center p-2 bg-white shadow-sm rounded-md hover:bg-gray-100 transition-all cursor-pointer"
@@ -18,21 +35,21 @@ export default function ProfileList({ profiles, onProfileSelect, onAddProfile })
             <div className="flex space-x-2">
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  // 编辑按钮的功能，跳转到编辑页面
-                  console.log(`Edit profile: ${profile.name}`);
+                  e.stopPropagation(); // 防止事件冒泡
+                  onEditProfile(profile); // 调用编辑回调
                 }}
-                className="text-sm text-blue-500"
+                className="text-sm text-blue-500 hover:underline"
               >
                 Edit
               </button>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  // 删除按钮的功能
-                  console.log(`Delete profile: ${profile.name}`);
+                  e.stopPropagation(); // 防止事件冒泡
+                  if (confirm(`Are you sure you want to delete ${profile.name}?`)) {
+                    onDeleteProfile(profile); // 调用删除回调
+                  }
                 }}
-                className="text-sm text-red-500"
+                className="text-sm text-red-500 hover:underline"
               >
                 Delete
               </button>
