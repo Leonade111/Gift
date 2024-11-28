@@ -1,3 +1,4 @@
+import React from 'react';  // 如果你未显式使用 React，还是加上这个导入
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
