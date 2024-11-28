@@ -4,8 +4,14 @@ import { useState } from "react";
 import ProfileList from "./profileList";
 import ProfileContent from "./profileContent";
 
+export interface Profile {
+  name: string;
+  age: number;
+  lastGift: string;
+}
+
 export default function Page() {
-  const [profiles, setProfiles] = useState([
+  const [profiles, setProfiles] = useState<Profile[]>([
     {
       name: "John Doe",
       age: 30,
@@ -17,14 +23,15 @@ export default function Page() {
       lastGift: "Yoga Mat",
     },
   ]);
-  const [selectedProfile, setSelectedProfile] = useState(profiles[0]);
+  const [selectedProfile, setSelectedProfile] = useState<Profile>(profiles[0]);
 
-  const handleProfileSelect = (profile) => {
-    setSelectedProfile(profile);
+  // 显式声明handleProfileSelect函数的返回类型为void
+  const handleProfileSelect = (profile: Profile): void => {
+    setSelectedProfile(profile); // 设置选中的profile
   };
 
   const handleAddProfile = () => {
-    const newProfile = {
+    const newProfile: Profile = {
       name: "New Profile",
       age: 0,
       lastGift: "None",
@@ -33,7 +40,7 @@ export default function Page() {
     setSelectedProfile(newProfile);
   };
 
-  const handleSave = (profileData) => {
+  const handleSave = (profileData: Profile) => {
     const updatedProfiles = profiles.map((profile) =>
       profile.name === selectedProfile.name ? profileData : profile
     );
@@ -42,7 +49,7 @@ export default function Page() {
   };
 
   const handleReset = () => {
-    setSelectedProfile(profiles.find((profile) => profile.name === selectedProfile.name));
+    setSelectedProfile(profiles.find((profile) => profile.name === selectedProfile.name)!);
   };
 
   return (
@@ -50,7 +57,7 @@ export default function Page() {
       {/* Left: Profile List */}
       <ProfileList
         profiles={profiles}
-        onProfileSelect={handleProfileSelect}
+        onProfileSelect={handleProfileSelect} // 确保传递的参数与类型匹配
         onAddProfile={handleAddProfile}
       />
       {/* Right: Profile Content */}
