@@ -3,6 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 
+// 定义类型
+interface Gift {
+  id: number;
+  name: string;
+  price: string;
+  image: string;
+}
+
+interface GiftsData {
+  Toys: Gift[];
+  Books: Gift[];
+  Electronics: Gift[];
+  Fashion: Gift[];
+  "Home Decor": Gift[];
+}
+
 export default function MainPage() {
   // 分类数据
   const categories = [
@@ -14,7 +30,7 @@ export default function MainPage() {
   ];
 
   // 示例礼物数据
-  const gifts = {
+  const gifts: GiftsData = {
     Toys: [
       {
         id: 1,
@@ -69,7 +85,8 @@ export default function MainPage() {
     ],
   };
 
-  const [selectedCategory, setSelectedCategory] = useState("Toys");
+  // 将 selectedCategory 的类型限制为 gifts 的键
+  const [selectedCategory, setSelectedCategory] = useState<keyof GiftsData>("Toys");
 
   return (
     <section className="min-h-screen bg-yellow-100 text-gray-800 flex">
@@ -102,7 +119,7 @@ export default function MainPage() {
           {categories.map((category) => (
             <li
               key={category.id}
-              onClick={() => setSelectedCategory(category.name)}
+              onClick={() => setSelectedCategory(category.name as keyof GiftsData)}
               className={`cursor-pointer px-4 py-2 rounded-md transition-colors ${
                 selectedCategory === category.name
                   ? "bg-orange-300 text-white font-semibold"
@@ -138,4 +155,3 @@ export default function MainPage() {
     </section>
   );
 }
-  
