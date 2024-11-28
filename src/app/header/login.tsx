@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export default function Login({ isOpen, onClose }) {
+// 定义 Login 组件的属性类型
+interface LoginProps {
+  isOpen: boolean; // 是否显示登录框
+  onClose: () => void; // 关闭登录框的回调函数
+}
+
+export default function Login({ isOpen, onClose }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -12,21 +18,27 @@ export default function Login({ isOpen, onClose }) {
     setShowPassword(!showPassword);
   };
 
-  if (!isOpen) return null; // 如果没有打开，则返回 null
+  if (!isOpen) return null; // 如果 isOpen 为 false，不渲染组件
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-8 shadow-lg w-96">
         <div className="text-right">
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
         <h2 className="text-2xl font-semibold text-center text-orange-600 mb-6">Login</h2>
-        
+
         <form>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-sm text-gray-600">Email</label>
+            <label htmlFor="email" className="block text-sm text-gray-600">
+              Email
+            </label>
             <input
               type="email"
               id="email"
@@ -36,9 +48,11 @@ export default function Login({ isOpen, onClose }) {
               placeholder="Enter your email"
             />
           </div>
-          
+
           <div className="mb-6">
-            <label htmlFor="password" className="block text-sm text-gray-600">Password</label>
+            <label htmlFor="password" className="block text-sm text-gray-600">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -52,8 +66,9 @@ export default function Login({ isOpen, onClose }) {
                 type="button"
                 onClick={togglePasswordVisibility}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                aria-label="Toggle password visibility"
               >
-                {showPassword ? "" : ""}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
@@ -61,9 +76,13 @@ export default function Login({ isOpen, onClose }) {
           <div className="flex justify-between items-center mb-4">
             <div>
               <input type="checkbox" id="remember" />
-              <label htmlFor="remember" className="text-sm text-gray-600 ml-2">Remember me</label>
+              <label htmlFor="remember" className="text-sm text-gray-600 ml-2">
+                Remember me
+              </label>
             </div>
-            <a href="#forgot-password" className="text-sm text-orange-600">Forgot password?</a>
+            <a href="#forgot-password" className="text-sm text-orange-600">
+              Forgot password?
+            </a>
           </div>
 
           <div className="mb-6">
@@ -78,8 +97,11 @@ export default function Login({ isOpen, onClose }) {
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account? 
-            <a href="#signup" className="text-orange-600 font-semibold"> Sign Up</a>
+            Don't have an account?
+            <a href="#signup" className="text-orange-600 font-semibold">
+              {" "}
+              Sign Up
+            </a>
           </p>
         </div>
       </div>
