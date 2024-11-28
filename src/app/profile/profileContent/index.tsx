@@ -2,8 +2,22 @@
 
 import { useState, useEffect } from "react";
 
-export default function ProfileContent({ selectedProfile, onSave, onReset }) {
-  const [profileData, setProfileData] = useState(selectedProfile);
+// 定义Profile类型
+interface Profile {
+  name: string;
+  age: number;
+  lastGift: string;
+}
+
+// 定义ProfileContentProps接口，确保传递的props类型正确
+interface ProfileContentProps {
+  selectedProfile: Profile;
+  onSave: (profileData: Profile) => void;
+  onReset: () => void;
+}
+
+export default function ProfileContent({ selectedProfile, onSave, onReset }: ProfileContentProps) {
+  const [profileData, setProfileData] = useState<Profile>(selectedProfile);
   const [isSaved, setIsSaved] = useState(true); // 状态跟踪是否保存
 
   // 检查是否有修改，并更新保存状态
@@ -12,7 +26,7 @@ export default function ProfileContent({ selectedProfile, onSave, onReset }) {
     setIsSaved(true); // 当选中的 profile 发生变化时，默认认为已保存
   }, [selectedProfile]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfileData((prevData) => ({
       ...prevData,
@@ -65,11 +79,7 @@ export default function ProfileContent({ selectedProfile, onSave, onReset }) {
         <button
           onClick={handleSave}
           disabled={isSaved} // 如果已保存，禁用按钮
-          className={`py-2 px-4 rounded-md transition-all ${
-            isSaved
-              ? "bg-gray-300 text-gray-700 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
+          className={`py-2 px-4 rounded-md transition-all ${isSaved ? "bg-gray-300 text-gray-700 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
         >
           {isSaved ? "Saved" : "Save Changes"}
         </button>

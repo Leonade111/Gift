@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProfileList from "./profileList";
 import ProfileContent from "./profileContent";
 
-export interface Profile {
+interface Profile {
   name: string;
   age: number;
   lastGift: string;
@@ -25,9 +25,8 @@ export default function Page() {
   ]);
   const [selectedProfile, setSelectedProfile] = useState<Profile>(profiles[0]);
 
-  // 显式声明handleProfileSelect函数的返回类型为void
-  const handleProfileSelect = (profile: Profile): void => {
-    setSelectedProfile(profile); // 设置选中的profile
+  const handleProfileSelect = (profile: Profile) => {
+    setSelectedProfile(profile);
   };
 
   const handleAddProfile = () => {
@@ -49,7 +48,19 @@ export default function Page() {
   };
 
   const handleReset = () => {
-    setSelectedProfile(profiles.find((profile) => profile.name === selectedProfile.name)!);
+    setSelectedProfile(profiles.find((profile) => profile.name === selectedProfile.name) || profiles[0]);
+  };
+
+  const handleEditProfile = (profile: Profile) => {
+    setSelectedProfile(profile);
+  };
+
+  const handleDeleteProfile = (profile: Profile) => {
+    const updatedProfiles = profiles.filter((p) => p.name !== profile.name);
+    setProfiles(updatedProfiles);
+    if (selectedProfile.name === profile.name && updatedProfiles.length > 0) {
+      setSelectedProfile(updatedProfiles[0]);
+    }
   };
 
   return (
@@ -57,8 +68,10 @@ export default function Page() {
       {/* Left: Profile List */}
       <ProfileList
         profiles={profiles}
-        onProfileSelect={handleProfileSelect} // 确保传递的参数与类型匹配
+        onProfileSelect={handleProfileSelect}
         onAddProfile={handleAddProfile}
+        onEditProfile={handleEditProfile} // 传递编辑回调
+        onDeleteProfile={handleDeleteProfile} // 传递删除回调
       />
       {/* Right: Profile Content */}
       <ProfileContent

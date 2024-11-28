@@ -1,20 +1,22 @@
 "use client";
 
 // 确保导入了React以防止未定义错误
-import React from "react"; 
+import React from "react";
 
+// 定义Profile类型
 interface Profile {
   name: string;
-  age?: number; // 根据需要可以继续扩展属性
-  lastGift?: string;
+  age: number;  // 将age改为必选项，确保是number类型
+  lastGift: string;
 }
 
+// 定义ProfileListProps接口，确保回调函数的参数类型一致
 interface ProfileListProps {
   profiles: Profile[];
   onProfileSelect: (profile: Profile) => void;
   onAddProfile: () => void;
-  onEditProfile: (profile: Profile) => void; // 编辑回调
-  onDeleteProfile: (profile: Profile) => void; // 删除回调
+  onEditProfile: (profile: Profile) => void;
+  onDeleteProfile: (profile: Profile) => void;
 }
 
 export default function ProfileList({
