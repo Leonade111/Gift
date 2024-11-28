@@ -1,4 +1,6 @@
 "use client";
+// 在文件顶部确保有如下导入
+import React from "react"; // 解决 React is not defined 的问题
 
 import { useState, useEffect } from "react";
 
