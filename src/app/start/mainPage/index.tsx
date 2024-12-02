@@ -1,23 +1,41 @@
 "use client"; // 声明为客户端组件
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
+// 定义商品接口
+interface Item {
+  gift_id: string;
+  gift_name: string;
+  gift_price: number;  // 假设价格是数字类型
+  img_url: string;
+}
+
 export default function MainPage() {
-  const [giftRequest, setGiftRequest] = useState("");
+  const [giftRequest, setGiftRequest] = useState(""); // 搜索框的输入
+  const [items, setItems] = useState<Item[]>([]); // 存储商品数据
 
-  const items = [
-    { name: "Tennis Racket", price: "$120", src: "/images/tennis-racket.jpg", id: "tennis-racket" },
-    { name: "Wireless Headphones", price: "$180", src: "/images/headphones.jpg", id: "headphones" },
-    { name: "Smart Watch", price: "$250", src: "/images/smart-watch.jpg", id: "smart-watch" },
-    { name: "Travel Backpack", price: "$90", src: "/images/backpack.jpg", id: "backpack" },
-    { name: "Sneakers", price: "$150", src: "/images/sneakers.jpg", id: "sneakers" },
-    { name: "Sunglasses", price: "$60", src: "/images/sunglasses.jpg", id: "sunglasses" },
-    { name: "Water Bottle", price: "$25", src: "/images/water-bottle.jpg", id: "water-bottle" },
-    { name: "Tennis Ball Pack", price: "$20", src: "/images/tennis-ball-pack.jpg", id: "tennis-ball-pack" },
-    { name: "Fitness Tracker", price: "$110", src: "/images/fitness-tracker.jpg", id: "fitness-tracker" },
-  ];
+  // 从 API 获取数据
+  useEffect(() => {
+    // 发起请求，假设你的 API 路径是 '/api/items'
+    const fetchItems = async () => {
+      try {
+        const response = await fetch("/api/items");
+        if (response.ok) {
+          const data = await response.json();
+          setItems(data); // 更新商品数据
+        } else {
+          console.error("Failed to fetch items.");
+        }
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
 
+    fetchItems();
+  }, []);
+
+  // 搜索事件处理
   const handleSearch = () => {
     alert(`Searching for: ${giftRequest}`);
   };
@@ -72,18 +90,18 @@ export default function MainPage() {
       {/* 图片网格 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
         {items.map((item, index) => (
-          <Link href={`/items/${item.id}`} key={index}>
+          <Link href={`/items/${item.gift_id}`} key={index}>
             <div
               className="bg-white shadow-lg rounded-lg p-6 hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
               <img
-                src={item.src}
-                alt={item.name}
+                src={item.img_url}  // 从数据库获取图片 URL
+                alt={item.gift_name}  // 商品名称作为图片描述
                 className="rounded-lg w-full object-cover h-48"
               />
               <div className="mt-4 text-center">
-                <p className="text-lg font-bold text-gray-900">{item.name}</p>
-                <p className="text-sm font-serif text-gray-600">{item.price}</p>
+                <p className="text-lg font-bold text-gray-900">{item.gift_name}</p>
+                <p className="text-sm font-serif text-gray-600">￥{item.gift_price}</p>  {/* 显示带￥符号的价格 */}
               </div>
             </div>
           </Link>
