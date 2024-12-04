@@ -71,20 +71,24 @@ export default function MainPage() {
       </div>
 
       {/* 输入框 */}
+<<<<<<< HEAD
       <div className="max-w-7xl mx-auto mb-10">
         <label
           className="block text-2xl font-semibold mb-6"
           htmlFor="gift-input">
+=======
+      <div className="max-w-10xl mx-auto mb-10">
+        <label className="block text-2xl font-semibold mb-6" htmlFor="gift-input">
+>>>>>>> f2732a7 (category change)
           Describe the recipient of your gift:
         </label>
         <div className="flex items-center space-x-4">
-          <input
+          <textarea
             id="gift-input"
-            type="text"
             value={giftRequest}
             onChange={(e) => setGiftRequest(e.target.value)}
             placeholder="A 30-year-old worker who likes to play tennis"
-            className="flex-grow px-6 py-4 rounded-lg shadow-lg text-gray-800 bg-white focus:ring-4 focus:ring-orange-400 focus:outline-none text-lg"
+            className="flex-grow px-6 py-4 rounded-lg shadow-lg text-gray-800 bg-white focus:ring-4 focus:ring-orange-400 focus:outline-none text-lg resize-none w-full max-w-4xl"  // 更宽的输入框
           />
           <button
             onClick={handleSearch}

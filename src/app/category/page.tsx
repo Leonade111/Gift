@@ -10,7 +10,7 @@ export default function StartPage() {
         <MainPage />
       </main>
       {/* 页脚部分 */}
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

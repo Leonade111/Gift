@@ -1,6 +1,6 @@
 // next.config.js
 module.exports = {
   images: {
-    domains: ['via.placeholder.com'], // 添加你允许的图片域名
+    domains: ['tse4-mm.cn.bing.net', 'th.bing.com', 'ts1.cn.mm.bing.net'], // 添加允许的图片来源
   },
-}
+};
