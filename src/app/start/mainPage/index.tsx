@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Item, Category, CATEGORIES } from "@/types/gifts";
+
+// 定义商品接口
+interface Item {
+  gift_id: string;
+  gift_name: string;
+  gift_price: number;  // 假设价格是数字类型
+  img_url: string;
+}
 
 export default function MainPage() {
   const [giftRequest, setGiftRequest] = useState(""); // 搜索框的输入
@@ -29,24 +36,8 @@ export default function MainPage() {
   }, []);
 
   // 搜索事件处理
-
-  const handleSearch = async () => {
-    try {
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: giftRequest,
-        }),
-      };
-      const response = await fetch("/api/recommend", options);
-      const result = await response.json();
-      console.log(result);
-    } catch (error) {
-      console.error("Failed to search:", error);
-    }
+  const handleSearch = () => {
+    alert(`Searching for: ${giftRequest}`);
   };
 
   return (
@@ -55,26 +46,27 @@ export default function MainPage() {
       <div className="absolute top-4 right-6 flex space-x-6">
         <Link
           href="/"
-          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg">
+          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg"
+        >
           Home
         </Link>
         <Link
           href="/category"
-          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg">
+          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg"
+        >
           Category
         </Link>
         <Link
           href="/"
-          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg">
+          className="text-lg font-semibold text-gray-700 hover:text-orange-600 rounded-lg px-4 py-2 transition-all duration-300 transform hover:scale-105 active:scale-90 active:bg-yellow-200 active:shadow-lg"
+        >
           Setting
         </Link>
       </div>
 
       {/* 输入框 */}
       <div className="max-w-7xl mx-auto mb-10">
-        <label
-          className="block text-2xl font-semibold mb-6"
-          htmlFor="gift-input">
+        <label className="block text-2xl font-semibold mb-6" htmlFor="gift-input">
           Describe the recipient of your gift:
         </label>
         <div className="flex items-center space-x-4">
@@ -88,7 +80,8 @@ export default function MainPage() {
           />
           <button
             onClick={handleSearch}
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-4 rounded-lg font-semibold text-white shadow-lg transform hover:scale-105 active:scale-95 transition-all">
+            className="bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-4 rounded-lg font-semibold text-white shadow-lg transform hover:scale-105 active:scale-95 transition-all"
+          >
             Search
           </button>
         </div>
@@ -98,20 +91,17 @@ export default function MainPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
         {items.map((item, index) => (
           <Link href={`/items/${item.gift_id}`} key={index}>
-            <div className="bg-white shadow-lg rounded-lg p-6 hover:scale-105 transition-transform duration-300 cursor-pointer">
+            <div
+              className="bg-white shadow-lg rounded-lg p-6 hover:scale-105 transition-transform duration-300 cursor-pointer"
+            >
               <img
-                src={item.img_url} // 从数据库获取图片 URL
-                alt={item.gift_name} // 商品名称作为图片描述
+                src={item.img_url}  // 从数据库获取图片 URL
+                alt={item.gift_name}  // 商品名称作为图片描述
                 className="rounded-lg w-full object-cover h-48"
               />
               <div className="mt-4 text-center">
-                <p className="text-lg font-bold text-gray-900">
-                  {item.gift_name}
-                </p>
-                <p className="text-sm font-serif text-gray-600">
-                  ￥{item.gift_price}
-                </p>{" "}
-                {/* 显示带￥符号的价格 */}
+                <p className="text-lg font-bold text-gray-900">{item.gift_name}</p>
+                <p className="text-sm font-serif text-gray-600">￥{item.gift_price}</p>  {/* 显示带￥符号的价格 */}
               </div>
             </div>
           </Link>
