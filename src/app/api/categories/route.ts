@@ -1,23 +1,20 @@
-// app/api/categories/route.js
+// app/api/categories/route.ts
 
-import mysql from 'mysql2/promise';
-import { NextRequest } from 'next/server'; // 导入 NextRequest 类型
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-// 创建数据库连接池
-const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',  // 替换为你的 MySQL 用户名
-  password: '123456',  // 替换为你的 MySQL 密码
-  database: 'gift_item',  // 替换为你的数据库名
-});
-
-export async function GET(request: NextRequest) {  // 为 request 添加类型
+export async function GET() {  
   try {
     // 执行查询，获取 tags 表中的所有记录
-    const [categories] = await db.execute('SELECT tag_id, tag_name FROM tags');
-    return new Response(JSON.stringify(categories), { status: 200 });  // 返回类别列表
+    const { data: categories, error } = await supabase
+      .from('tags')
+      .select('tag_id, tag_name');
+
+    if (error) throw error;
+
+    return NextResponse.json(categories);  
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ message: 'Error fetching categories' }), { status: 500 });
+    console.error("Error fetching categories:", error);
+    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
   }
 }

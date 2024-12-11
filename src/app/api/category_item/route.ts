@@ -1,31 +1,92 @@
-import { NextRequest } from 'next/server';  // 确保导入 NextRequest
-import mysql from 'mysql2/promise';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
-// 创建数据库连接池
-const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',  // 替换为你的数据库用户名
-  password: '123456',  // 替换为你的数据库密码
-  database: 'gift_item',  // 确保你的数据库名称是 gift_item
-});
+// 定义每页显示的商品数量
+const ITEMS_PER_PAGE = 12;
 
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url); // 获取请求的 URL
-  const tagId = url.searchParams.get('tag_id'); // 获取 URL 中的 tag_id 参数
-
   try {
-    // 根据是否传入 tag_id 来决定查询的 SQL 语句
-    const query = tagId
-      ? `SELECT g.gift_id, g.gift_name, g.gift_price, g.img_url 
-         FROM gift_items g
-         JOIN gift_item_tags git ON g.gift_id = git.item_id
-         WHERE git.tag_id = ?`
-      : `SELECT gift_id, gift_name, gift_price, img_url FROM gift_items`;  // 如果没有 tag_id，返回所有物品
+    const url = new URL(request.url);
+    const tagId = url.searchParams.get('tag_id');
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || String(ITEMS_PER_PAGE));
 
-    const [items] = await db.execute(query, tagId ? [tagId] : []);
-    return new Response(JSON.stringify(items), { status: 200 });
+    console.log("API received params:", { tagId, page, limit });
+
+    // 计算偏移量
+    const offset = (page - 1) * limit;
+
+    // 构建基础查询
+    let query;
+
+    // 如果提供了tag_id，添加tag过滤
+    if (tagId) {
+      console.log("Querying with tag_id:", tagId);
+      query = supabase
+        .from('gift_items')
+        .select(`
+          gift_id,
+          gift_name,
+          gift_price,
+          img_url,
+          gift_item_tags!inner (tag_id)
+        `)
+        .eq('gift_item_tags.tag_id', tagId);
+    } else {
+      query = supabase
+        .from('gift_items')
+        .select(`
+          gift_id,
+          gift_name,
+          gift_price,
+          img_url
+        `);
+    }
+
+    // 添加分页
+    const { data: items, error, count } = await query
+      .range(offset, offset + limit - 1)
+      .order('gift_id', { ascending: true });
+
+    console.log("Database query result:", { items, error, count });
+
+    if (error) {
+      console.error("Database query error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch items" },
+        { status: 500 }
+      );
+    }
+
+    // 清理带tag查询的数据
+    const cleanedItems = tagId
+      ? items?.map(item => ({
+          gift_id: item.gift_id,
+          gift_name: item.gift_name,
+          gift_price: item.gift_price,
+          img_url: item.img_url
+        }))
+      : items;
+
+    const response = {
+      items: cleanedItems || [],
+      pagination: {
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    };
+
+    console.log("Sending response:", response);
+
+    return NextResponse.json(response);
+
   } catch (error) {
-    console.error('Error fetching items:', error);
-    return new Response(JSON.stringify({ message: 'Error fetching items' }), { status: 500 });
+    console.error("Unexpected error:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 }
+    );
   }
 }
