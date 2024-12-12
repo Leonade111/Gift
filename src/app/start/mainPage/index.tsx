@@ -1,6 +1,6 @@
 "use client"; // 声明为客户端组件
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 // 定义商品接口
@@ -15,10 +15,26 @@ interface Item {
 export default function MainPage() {
   const [giftRequest, setGiftRequest] = useState("");
   const [searchItems, setSearchItems] = useState<Item[]>([]);
+  const [defaultItems, setDefaultItems] = useState<Item[]>([]); // 默认商品状态
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+
+  // 获取默认商品数据
+  useEffect(() => {
+    const fetchDefaultItems = async () => {
+      try {
+        const response = await fetch("/api/default_items");
+        const data = await response.json();
+        setDefaultItems(data.items || []); // 假设API返回的数据结构包含items
+      } catch (error) {
+        console.error("Failed to fetch default items:", error);
+      }
+    };
+    
+    fetchDefaultItems();
+  }, []);
 
   // 搜索事件处理
   const handleSearch = async () => {
@@ -186,6 +202,34 @@ export default function MainPage() {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* 当没有搜索时，显示默认商品 */}
+      {!hasSearched && !giftRequest && defaultItems.length > 0 && (
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-2xl font-semibold mb-6 text-center">Default Recommended Gifts</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {defaultItems.map((item) => (
+              <div
+                key={item.gift_id}
+                className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+                <img
+                  src={item.img_url}
+                  alt={item.gift_name}
+                  className="w-full h-64 object-contain rounded-lg mb-4"
+                />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                    {item.gift_name}
+                  </h3>
+                  <p className="text-xl font-bold text-orange-500">
+                    ${item.gift_price}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </main>
