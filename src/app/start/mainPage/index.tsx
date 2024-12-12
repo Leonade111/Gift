@@ -165,7 +165,7 @@ export default function MainPage() {
                         {item.gift_name}
                       </h3>
                       <p className="text-xl font-bold text-orange-500">
-                        ${item.gift_price}
+                        ￥{item.gift_price}
                       </p>
                     </div>
                   </div>
