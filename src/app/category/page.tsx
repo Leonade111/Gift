@@ -17,7 +17,7 @@ export default function StartPage() {
       <main className="flex-grow">
         <MainPage /> {/* MainPage 作为主要内容 */}
       </main>
-
+        <Footer />
       {/* 页脚部分 */}
     </div>
   );
