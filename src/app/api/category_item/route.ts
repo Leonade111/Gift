@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // 定义每页显示的商品数量
 const ITEMS_PER_PAGE = 12;
@@ -61,11 +66,11 @@ export async function GET(request: NextRequest) {
     // 清理带tag查询的数据
     const cleanedItems = tagId
       ? items?.map(item => ({
-          gift_id: item.gift_id,
-          gift_name: item.gift_name,
-          gift_price: item.gift_price,
-          img_url: item.img_url
-        }))
+        gift_id: item.gift_id,
+        gift_name: item.gift_name,
+        gift_price: item.gift_price,
+        img_url: item.img_url
+      }))
       : items;
 
     const response = {

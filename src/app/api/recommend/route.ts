@@ -1,29 +1,49 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json();
-    
-    // 从Supabase获取标签数据
+
+    // 先检查数据库连接
+    console.log('正在连接 Supabase...');
+
+    // 获取标签数据
     const { data: tags, error } = await supabase
-      .from('tags')
+      .from('tags')  // 确保这是你的标签表名
       .select('tag_id, tag_name');
 
-    if (error) throw new Error('获取标签数据失败');
-    if (!tags || tags.length === 0) throw new Error('没有找到标签数据');
+    // 添加详细的错误日志
+    if (error) {
+      console.error('Supabase 错误:', error);
+      return NextResponse.json(
+        { error: '获取标签数据失败', details: error },
+        { status: 500 }
+      );
+    }
+
+    if (!tags || tags.length === 0) {
+      console.error('没有找到标签数据');
+      return NextResponse.json(
+        { error: '没有找到标签数据' },
+        { status: 404 }
+      );
+    }
 
     // 构建标签信息字符串
-    const tagsInfo = tags
-      .map(tag => `${tag.tag_id}: ${tag.tag_name}`)
-      .join('\n');
+    const tagInfo = tags.map(tag => `${tag.tag_id}: ${tag.tag_name}`).join('\n');
 
     // 构建系统消息
     const systemMessage = `你是一个礼物推荐助手。基于以下可用的礼物类别标签：
-${tagsInfo}
+${tagInfo}
 
-请分析用户的需求描述，返回最相关的1-3个标签ID。
-只返回数字ID，用逗号分隔。例如：如果用户想要运动用品和电子产品，就返回对应的ID，如"4,2"。`;
+请分析用户的需求描述，返回最相关的2-3个标签ID。
+只返回数字ID，用逗号分隔。例如：如果用户想要运动用品和电子产品，就返回对应的ID，如"4,2"。请确保返回至少2个标签，最多3个标签。`;
 
     const generatePromptOptions = {
       method: "POST",

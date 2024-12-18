@@ -28,7 +28,10 @@ export default function MainPage() {
       try {
         const response = await fetch('/api/categories');
         const data = await response.json();
-        setCategories(data);
+        // 确保我们设置的是 categories 数组
+        if (data && data.categories) {
+          setCategories(data.categories);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -52,7 +55,7 @@ export default function MainPage() {
   return (
     <main className="min-h-screen bg-yellow-50 py-10 px-6">
       {/* 顶部导航 */}
-      <div className="absolute top-6 right-6 flex space-x-6"> {/* 调整按钮间距并稍微下移 */}
+      <div className="absolute top-6 right-6 flex space-x-6">
         <Link
           href="/"
           className="text-lg font-semibold text-gray-700 hover:text-orange-600 py-3 px-6">
@@ -76,15 +79,14 @@ export default function MainPage() {
         <div className="w-1/4 bg-white p-4 rounded-lg shadow-md">
           <h1 className="text-3xl font-bold mb-8 text-center">Gift Categories</h1>
           <div className="space-y-4">
-            {categories.map((category) => (
+            {Array.isArray(categories) && categories.map((category) => (
               <button
                 key={category.tag_id}
                 onClick={() => handleTagSelect(category.tag_id)}
-                className={`w-full p-4 rounded-lg text-left transition-all duration-300 ${
-                  selectedTagId === category.tag_id
+                className={`w-full p-4 rounded-lg text-left transition-all duration-300 ${selectedTagId === category.tag_id
                     ? 'bg-orange-500 text-white'
                     : 'bg-white hover:bg-orange-100'
-                }`}>
+                  }`}>
                 {category.tag_name}
               </button>
             ))}

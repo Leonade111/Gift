@@ -1,84 +1,143 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProfileList from "./profileList";
-import ProfileContent from "./profileContent";
 
 interface Profile {
+  id: number;
   name: string;
   age: number;
   lastGift: string;
+  longDescription?: string;
 }
 
-export default function Page() {
-  const [profiles, setProfiles] = useState<Profile[]>([
-    {
-      name: "John Doe",
-      age: 30,
-      lastGift: "Tennis Racket",
-    },
-    {
-      name: "Jane Smith",
-      age: 25,
-      lastGift: "Yoga Mat",
-    },
-  ]);
-  const [selectedProfile, setSelectedProfile] = useState<Profile>(profiles[0]);
+interface Gift {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+}
+
+export default function ProfilePage() {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | undefined>(undefined);
+  const [gifts, setGifts] = useState<Gift[]>([]);
+  const [loadingGifts, setLoadingGifts] = useState(false);
+
+  useEffect(() => {
+    // 从数据库加载profiles
+    const fetchProfiles = async () => {
+      try {
+        const response = await fetch('/api/profile/getAll');
+        const data = await response.json();
+        if (data.success) {
+          setProfiles(data.profiles);
+          setSelectedProfile(data.profiles[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch profiles:', error);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProfile || !selectedProfile.longDescription) return;
+
+    const fetchGifts = async () => {
+      setLoadingGifts(true);
+      try {
+        const response = await fetch('/api/gifts/recommend', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            longDescription: selectedProfile.longDescription,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setGifts(data.gifts);
+        }
+      } catch (error) {
+        console.error('Failed to fetch gifts:', error);
+      } finally {
+        setLoadingGifts(false);
+      }
+    };
+
+    fetchGifts();
+  }, [selectedProfile]);
 
   const handleProfileSelect = (profile: Profile) => {
     setSelectedProfile(profile);
   };
 
   const handleAddProfile = () => {
-    const newProfile: Profile = {
-      name: "New Profile",
-      age: 0,
-      lastGift: "None",
-    };
-    setProfiles([...profiles, newProfile]);
-    setSelectedProfile(newProfile);
-  };
-
-  const handleSave = (profileData: Profile) => {
-    const updatedProfiles = profiles.map((profile) =>
-      profile.name === selectedProfile.name ? profileData : profile
-    );
-    setProfiles(updatedProfiles);
-    setSelectedProfile(profileData);
-  };
-
-  const handleReset = () => {
-    setSelectedProfile(profiles.find((profile) => profile.name === selectedProfile.name) || profiles[0]);
+    // This is now handled by the create page
   };
 
   const handleEditProfile = (profile: Profile) => {
     setSelectedProfile(profile);
   };
 
-  const handleDeleteProfile = (profile: Profile) => {
-    const updatedProfiles = profiles.filter((p) => p.name !== profile.name);
-    setProfiles(updatedProfiles);
-    if (selectedProfile.name === profile.name && updatedProfiles.length > 0) {
-      setSelectedProfile(updatedProfiles[0]);
+  const handleDeleteProfile = async (profile: Profile) => {
+    try {
+      const response = await fetch(`/api/user/profile?user_id=${profile.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user profile');
+      }
+
+      setProfiles((prevProfiles) => {
+        const updatedProfiles = prevProfiles.filter((p) => p.id !== profile.id);
+        if (selectedProfile?.id === profile.id) {
+          setSelectedProfile(updatedProfiles[0] || undefined);
+        }
+        return updatedProfiles;
+      });
+    } catch (error) {
+      console.error('Error deleting profile:', error);
     }
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-yellow-100 via-orange-50 to-orange-200">
-      {/* Left: Profile List */}
+    <main className="flex min-h-screen bg-gradient-to-r from-pink-100 via-yellow-100 to-orange-100">
       <ProfileList
         profiles={profiles}
+        selectedProfile={selectedProfile}
         onProfileSelect={handleProfileSelect}
         onAddProfile={handleAddProfile}
-        onEditProfile={handleEditProfile} // 传递编辑回调
-        onDeleteProfile={handleDeleteProfile} // 传递删除回调
+        onEditProfile={handleEditProfile}
+        onDeleteProfile={handleDeleteProfile}
       />
-      {/* Right: Profile Content */}
-      <ProfileContent
-        selectedProfile={selectedProfile}
-        onSave={handleSave}
-        onReset={handleReset}
-      />
-    </div>
+
+      <div className="flex-1 p-8">
+        {loadingGifts ? (
+          <div>Loading gifts...</div>
+        ) : (
+          gifts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {gifts.map((gift) => (
+                <div key={gift.id} className="bg-white shadow-lg rounded-lg p-4">
+                  <img src={gift.image} alt={gift.name} className="w-full h-48 object-cover mb-4" />
+                  <h3 className="text-lg font-bold mb-2">{gift.name}</h3>
+                  <p className="text-gray-600 mb-2">{gift.description}</p>
+                  <p className="text-orange-500 font-bold">{gift.price}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>No gifts found.</div>
+          )
+        )}
+      </div>
+    </main>
   );
 }

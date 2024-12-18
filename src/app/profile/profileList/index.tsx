@@ -1,18 +1,16 @@
-"use client";
+import React from 'react';
+import { useRouter } from 'next/navigation';
 
-// 确保导入了React以防止未定义错误
-import React from "react";
-
-// 定义Profile类型
 interface Profile {
+  id: number;
   name: string;
-  age: number;  // 将age改为必选项，确保是number类型
+  age: number;
   lastGift: string;
 }
 
-// 定义ProfileListProps接口，确保回调函数的参数类型一致
 interface ProfileListProps {
   profiles: Profile[];
+  selectedProfile?: Profile;
   onProfileSelect: (profile: Profile) => void;
   onAddProfile: () => void;
   onEditProfile: (profile: Profile) => void;
@@ -21,55 +19,109 @@ interface ProfileListProps {
 
 export default function ProfileList({
   profiles,
+  selectedProfile,
   onProfileSelect,
   onAddProfile,
   onEditProfile,
   onDeleteProfile,
 }: ProfileListProps) {
+  const router = useRouter();
+
+  const handleAddClick = () => {
+    router.push('/profile/create');
+  };
+
   return (
-    <div className="w-1/4 bg-gray-50 p-4">
-      <h2 className="text-lg font-semibold mb-6">Profiles</h2>
-      <ul className="space-y-4">
-        {/* 遍历并显示每个profile */}
-        {profiles.map((profile) => (
-          <li
-            key={profile.name}
-            className="flex justify-between items-center p-2 bg-white shadow-sm rounded-md hover:bg-gray-100 transition-all cursor-pointer"
-            onClick={() => onProfileSelect(profile)} // 点击选择该profile
+    <div className="w-1/4 bg-white shadow-lg rounded-l-xl p-6 overflow-y-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Profiles</h2>
+        <button
+          onClick={handleAddClick}
+          className="bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <span>{profile.name}</span>
-            <div className="flex space-x-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 防止事件冒泡
-                  onEditProfile(profile); // 调用编辑回调
-                }}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                Edit
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 防止事件冒泡
-                  if (confirm(`Are you sure you want to delete ${profile.name}?`)) {
-                    onDeleteProfile(profile); // 调用删除回调
-                  }
-                }}
-                className="text-sm text-red-500 hover:underline"
-              >
-                Delete
-              </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {profiles.map((profile) => (
+          <div
+            key={profile.id}
+            className={`p-4 rounded-lg cursor-pointer transition-all ${selectedProfile?.id === profile.id
+                ? 'bg-orange-100 border-2 border-orange-500'
+                : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            onClick={() => onProfileSelect(profile)}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold text-gray-800">{profile.name}</h3>
+                <p className="text-sm text-gray-600">Age: {profile.age}</p>
+                <p className="text-sm text-gray-600">Last Gift: {profile.lastGift}</p>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditProfile(profile);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 p-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteProfile(profile);
+                  }}
+                  className="text-red-600 hover:text-red-800 p-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
-      {/* 添加新profile的按钮 */}
-      <button
-        onClick={onAddProfile}
-        className="mt-6 py-2 px-4 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all"
-      >
-        Add New Profile
-      </button>
+      </div>
     </div>
   );
 }
