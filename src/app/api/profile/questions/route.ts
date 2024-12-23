@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,6 +17,10 @@ interface APIResponse {
   success: boolean;
   question?: Question;
   error?: string;
+  data?: {
+    gifts: string[];
+    message: string;
+  };
 }
 
 const BASIC_QUESTIONS: Question[] = [
@@ -131,13 +136,23 @@ async function generateLongDescription(answers: string[]): Promise<string> {
       return '无法生成描述：答案不足';
     }
 
-    const systemPrompt = `You are a gift advisor analyzing a person's preferences.
-Generate a detailed description of the person based on their answers to questions.
-Focus on their interests, preferences, and potential gift ideas.
-Keep the description concise but informative.`;
+    const otherAnswers = answers.slice(2); // 只使用问卷答案，不包括名字和年龄
 
-    const userPrompt = `Based on these answers: "${answers.slice(2).join(', ')}"
-Generate a description of this person's interests and preferences.`;
+    const systemPrompt = `You are an expert at analyzing people's preferences and interests.
+Your task is to write a detailed description of a person based on their questionnaire answers.
+The description should:
+1. Be written in natural, flowing paragraphs
+2. Include their personality traits, interests, and lifestyle
+3. Highlight their preferences that are relevant for gift selection
+4. Be personal and engaging, but professional
+5. Be around 150-200 words long
+
+Format the description as a proper narrative, not just a list of traits.`;
+
+    const userPrompt = `Based on their questionnaire answers:
+${otherAnswers.join('\n')}
+
+Write a comprehensive description that captures who they are and what they might appreciate as gifts.`;
 
     const response = await fetch('https://api.siliconflow.com/v1/chat/completions', {
       method: 'POST',
@@ -152,7 +167,7 @@ Generate a description of this person's interests and preferences.`;
           { role: "user", content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 500
       })
     });
 
@@ -168,30 +183,77 @@ Generate a description of this person's interests and preferences.`;
   }
 }
 
-async function saveProfile(answers: string[]): Promise<void> {
+async function saveProfile(answers: string[], request: NextRequest): Promise<string[]> {
   try {
     if (!answers || answers.length < 2) {
       throw new Error('答案不足，无法创建档案');
     }
 
-    const name = answers[0]?.trim() || 'Unknown';
-    const age = parseInt(answers[1]) || 0;
-    const longDescription = await generateLongDescription(answers);
+    const name = answers[0];
+    const ageStr = answers[1];
+    let age: number | null = null;
+    
+    if (ageStr && ageStr.trim()) {
+      const parsedAge = parseInt(ageStr);
+      if (!isNaN(parsedAge)) {
+        age = parsedAge;
+      }
+    }
 
-    const { error } = await supabase
+    // 生成用户描述
+    const longDescription = await generateLongDescription(answers);
+    if (longDescription.includes('无法生成描述') || longDescription.includes('生成描述时发生错误')) {
+      throw new Error('无法生成用户描述');
+    }
+
+    // 创建用户档案
+    const { data: profile, error } = await supabase
       .from('profiles')
       .insert([
         {
-          name,
-          age,
-          long_description: longDescription,
+          name,        // 存储名字
+          age,  // 存储年龄
+          long_description: longDescription,  // 存储AI生成的描述
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
-      ]);
+      ])
+      .select('id, name, age, long_description')  // 明确指定要返回的字段
+      .single();
 
-    if (error) throw error;
-    console.log('档案保存成功');
+    if (error) {
+      console.error('保存用户档案失败:', error);
+      throw new Error('保存用户档案失败');
+    }
+
+    if (!profile || typeof profile.id !== 'number') {
+      console.error('保存成功但未返回有效的档案ID:', profile);
+      throw new Error('未能获取到新建档案的ID');
+    }
+
+    console.log('新建档案:', profile);
+
+    // 获取礼物推荐
+    const recommendResponse = await fetch(new URL('/api/gifts/recommend', request.url).href, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        profileId: profile.id
+      })
+    });
+
+    if (!recommendResponse.ok) {
+      const errorText = await recommendResponse.text();
+      console.error('获取推荐失败:', errorText);
+      throw new Error('获取推荐失败: ' + errorText);
+    }
+
+    const recommendData = await recommendResponse.json();
+    
+    console.log('档案保存成功，推荐礼物:', recommendData.gifts);
+    return recommendData.gifts; // 返回推荐的礼物
   } catch (error) {
     console.error('保存档案时出错:', error);
     throw error;
@@ -200,35 +262,30 @@ async function saveProfile(answers: string[]): Promise<void> {
 
 export async function POST(request: NextRequest): Promise<NextResponse<APIResponse>> {
   try {
-    const body = await request.json();
-    const { previousAnswers = [], questionIndex = 0 } = body;
+    const { previousAnswers, questionIndex } = await request.json();
 
-    // 验证输入
-    if (!Array.isArray(previousAnswers)) {
-      console.error('无效的答案格式');
-      return NextResponse.json({
-        success: false,
-        error: '无效的答案格式'
-      });
-    }
-
-    // 检查是否完成所有问题
-    if (questionIndex >= BASIC_QUESTIONS.length + 8) {
-      await saveProfile(previousAnswers);
+    // 如果 questionIndex 是 -1，这是最终提交
+    if (questionIndex === -1) {
+      const gifts = await saveProfile(previousAnswers, request);
       return NextResponse.json({
         success: true,
-        question: undefined
+        data: {
+          gifts: gifts,
+          message: '档案保存成功'
+        }
       });
     }
 
-    // 获取下一个问题
-    let question: Question;
+    // 如果是基础问题（名字和年龄）
     if (questionIndex < BASIC_QUESTIONS.length) {
-      question = BASIC_QUESTIONS[questionIndex];
-    } else {
-      question = await generateQuestion(previousAnswers);
+      return NextResponse.json({
+        success: true,
+        question: BASIC_QUESTIONS[questionIndex]
+      });
     }
 
+    // 生成动态问题
+    const question = await generateQuestion(previousAnswers);
     return NextResponse.json({
       success: true,
       question
@@ -236,9 +293,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<APIRespon
 
   } catch (error) {
     console.error('处理问题请求时出错:', error);
-    return NextResponse.json({
-      success: false,
-      error: '处理请求失败'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : '处理请求时出错'
+      },
+      { status: 500 }
+    );
   }
 }

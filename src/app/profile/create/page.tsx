@@ -73,27 +73,28 @@ const CreateProfile = () => {
 
     if (currentQuestionIndex === TOTAL_QUESTIONS - 1) {
       try {
-        const response = await fetch('/api/user/profile', {
+        // 保存用户档案
+        const response = await fetch('/api/profile/questions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: newAnswers[0],
-            age: parseInt(newAnswers[1]),
-            answers: newAnswers.slice(2)
+            previousAnswers: newAnswers,
+            questionIndex: -1, // 使用 -1 表示这是最终提交
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to save profile');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save profile');
         }
 
         setIsComplete(true);
         router.push('/profile');
       } catch (error) {
         console.error('Error saving profile:', error);
-        setError('Failed to save profile');
+        setError(error instanceof Error ? error.message : 'Failed to save profile');
       }
       return;
     }

@@ -2,16 +2,17 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Profile {
-  id: number;
+  id: number;  // 支持数字类型的ID
   name: string;
   age: number;
-  lastGift: string;
+  lastGift?: string;
+  long_description?: string;
 }
 
 interface ProfileListProps {
   profiles: Profile[];
-  selectedProfile?: Profile;
-  onProfileSelect: (profile: Profile) => void;
+  selectedProfile: Profile | undefined;
+  onProfileSelect: (profile: Profile | undefined) => void;
   onAddProfile: () => void;
   onEditProfile: (profile: Profile) => void;
   onDeleteProfile: (profile: Profile) => void;
@@ -28,13 +29,43 @@ export default function ProfileList({
   const router = useRouter();
 
   const handleAddClick = () => {
-    router.push('/profile/create');
+    onAddProfile();
+  };
+
+  const handleEditClick = (profile: Profile) => {
+    onEditProfile(profile);
+  };
+
+  const handleDeleteClick = async (profile: Profile) => {
+    if (window.confirm(`确定要删除用户 ${profile.name} 吗？`)) {
+      try {
+        const response = await fetch(`/api/user/profile?user_id=${encodeURIComponent(profile.id)}`, {
+          method: 'DELETE',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete profile');
+        }
+
+        if (data.success) {
+          // 通知父组件处理删除
+          onDeleteProfile(profile);
+        } else {
+          throw new Error(data.error || '删除失败');
+        }
+      } catch (error) {
+        console.error('Error deleting profile:', error);
+        alert(error instanceof Error ? error.message : '删除失败，请稍后重试');
+      }
+    }
   };
 
   return (
     <div className="w-1/4 bg-white shadow-lg rounded-l-xl p-6 overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Profiles</h2>
+        <h2 className="text-2xl font-bold text-gray-800">用户列表</h2>
         <button
           onClick={handleAddClick}
           className="bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600 transition-colors"
@@ -60,25 +91,29 @@ export default function ProfileList({
         {profiles.map((profile) => (
           <div
             key={profile.id}
-            className={`p-4 rounded-lg cursor-pointer transition-all ${selectedProfile?.id === profile.id
+            className={`p-4 rounded-lg cursor-pointer transition-all ${
+              selectedProfile?.id === profile.id
                 ? 'bg-orange-100 border-2 border-orange-500'
                 : 'bg-gray-50 hover:bg-gray-100'
-              }`}
+            }`}
             onClick={() => onProfileSelect(profile)}
           >
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-semibold text-gray-800">{profile.name}</h3>
-                <p className="text-sm text-gray-600">Age: {profile.age}</p>
-                <p className="text-sm text-gray-600">Last Gift: {profile.lastGift}</p>
+                <p className="text-sm text-gray-600">年龄: {profile.age}</p>
+                {profile.lastGift && (
+                  <p className="text-sm text-gray-600">上次礼物: {profile.lastGift}</p>
+                )}
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditProfile(profile);
+                    handleEditClick(profile);
                   }}
                   className="text-blue-600 hover:text-blue-800 p-1"
+                  title="Edit description"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -96,10 +131,7 @@ export default function ProfileList({
                   </svg>
                 </button>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteProfile(profile);
-                  }}
+                  onClick={(e) => handleDeleteClick(profile)}
                   className="text-red-600 hover:text-red-800 p-1"
                 >
                   <svg

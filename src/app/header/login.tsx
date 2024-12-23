@@ -1,28 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
-// 定义 Login 组件的属性类型
 interface LoginProps {
-  isOpen: boolean; // 是否显示登录框
-  onClose: () => void; // 关闭登录框的回调函数
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function Login({ isOpen, onClose }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // 处理密码显示/隐藏
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  if (!isOpen) return null; // 如果 isOpen 为 false，不渲染组件
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg p-8 shadow-lg w-96">
+  const modalContent = (
+    <>
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50" 
+        onClick={onClose}
+        style={{ zIndex: 9999 }}
+      />
+      <div 
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-8 shadow-lg w-96 max-w-[90%]"
+        style={{ zIndex: 10000 }}
+      >
         <div className="text-right">
           <button
             onClick={onClose}
@@ -33,10 +46,9 @@ export default function Login({ isOpen, onClose }: LoginProps) {
           </button>
         </div>
         <h2 className="text-2xl font-semibold text-center text-orange-600 mb-6">Login</h2>
-
-        <form>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm text-gray-600">
+        <form className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-gray-700 mb-2">
               Email
             </label>
             <input
@@ -44,67 +56,63 @@ export default function Login({ isOpen, onClose }: LoginProps) {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Enter your email"
             />
           </div>
-
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm text-gray-600">
+          <div className="relative">
+            <label htmlFor="password" className="block text-gray-700 mb-2">
               Password
             </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                aria-label="Toggle password visibility"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-3 top-[38px] text-gray-500"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
-
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <input type="checkbox" id="remember" />
-              <label htmlFor="remember" className="text-sm text-gray-600 ml-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="remember"
+                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
                 Remember me
               </label>
             </div>
-            <a href="#forgot-password" className="text-sm text-orange-600">
-              Forgot password?
-            </a>
+            <div className="text-sm">
+              <a href="#" className="text-orange-600 hover:text-orange-500">
+                Forgot password?
+              </a>
+            </div>
           </div>
-
-          <div className="mb-6">
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-orange-400 to-yellow-500 text-white py-3 rounded-lg hover:scale-105 transform transition-all"
-            >
-              Login
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
+            Login
+          </button>
         </form>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?
-            <a href="#signup" className="text-orange-600 font-semibold">
-              {" "}
-              Sign Up
-            </a>
-          </p>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Don't have an account?{" "}
+          <a href="#" className="text-orange-600 hover:text-orange-500">
+            Sign Up
+          </a>
         </div>
       </div>
-    </div>
+    </>
   );
+
+  return createPortal(modalContent, document.body);
 }
