@@ -26,7 +26,6 @@ const CreateProfile = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
 
   const fetchQuestion = useCallback(async (questionIndex: number, previousAnswers: string[]) => {
     try {
@@ -90,7 +89,6 @@ const CreateProfile = () => {
           throw new Error(errorData.error || 'Failed to save profile');
         }
 
-        setIsComplete(true);
         router.push('/profile');
       } catch (error) {
         console.error('Error saving profile:', error);

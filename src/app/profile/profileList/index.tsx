@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 
 interface Profile {
   id: number;  // 支持数字类型的ID
@@ -11,8 +10,8 @@ interface Profile {
 
 interface ProfileListProps {
   profiles: Profile[];
-  selectedProfile: Profile | undefined;
-  onProfileSelect: (profile: Profile | undefined) => void;
+  selectedProfile: Profile | null;
+  onProfileSelect: (profile: Profile) => void;
   onAddProfile: () => void;
   onEditProfile: (profile: Profile) => void;
   onDeleteProfile: (profile: Profile) => void;
@@ -26,8 +25,6 @@ export default function ProfileList({
   onEditProfile,
   onDeleteProfile,
 }: ProfileListProps) {
-  const router = useRouter();
-
   const handleAddClick = () => {
     onAddProfile();
   };
@@ -50,7 +47,6 @@ export default function ProfileList({
         }
 
         if (data.success) {
-          // 通知父组件处理删除
           onDeleteProfile(profile);
         } else {
           throw new Error(data.error || '删除失败');
@@ -131,7 +127,7 @@ export default function ProfileList({
                   </svg>
                 </button>
                 <button
-                  onClick={(e) => handleDeleteClick(profile)}
+                  onClick={() => handleDeleteClick(profile)}
                   className="text-red-600 hover:text-red-800 p-1"
                 >
                   <svg

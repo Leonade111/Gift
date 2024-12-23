@@ -12,14 +12,6 @@ const supabase = createClient(
   }
 );
 
-interface GiftItem {
-  gift_id: number;
-  gift_name: string;
-  gift_price: number;
-  img_url: string;
-  created_at: string;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取用户档案
-    const { data: profile, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .select('long_description')
       .eq('id', userId)
