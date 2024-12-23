@@ -26,7 +26,7 @@ interface Gift {
 export default function ProfilePage() {
   const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selectedProfile, setSelectedProfile] = useState<Profile | undefined>(undefined);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [loadingGifts, setLoadingGifts] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -98,7 +98,7 @@ export default function ProfilePage() {
     fetchGifts();
   }, [selectedProfile]);
 
-  const handleProfileSelect = (profile: Profile | undefined) => {
+  const handleProfileSelect = (profile: Profile | null) => {
     setSelectedProfile(profile);
   };
 
@@ -182,7 +182,7 @@ export default function ProfilePage() {
       
       // 如果删除的是当前选中的用户，选择新的用户或设置为undefined
       if (selectedProfile?.id === profile.id) {
-        setSelectedProfile(newProfiles.length > 0 ? newProfiles[0] : undefined);
+        setSelectedProfile(newProfiles.length > 0 ? newProfiles[0] : null);
       }
 
       // 调用删除API

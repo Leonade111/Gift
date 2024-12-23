@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// 定义类型
-type GiftItem = {
-  gift_id: number;
-  gift_name: string;
-  gift_price: number | null;
-  img_url: string | null;
-}
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -49,10 +41,13 @@ export async function POST(request: NextRequest) {
     } else if (body.longDescription) {
       // 直接使用提供的描述
       userDescription = body.longDescription;
+    } else if (body.prompt) {
+      // 使用搜索提示作为描述
+      userDescription = body.prompt;
     } else {
-      console.error('Missing both profileId and longDescription:', body);
+      console.error('Missing required parameters:', body);
       return NextResponse.json(
-        { error: 'Either profileId or longDescription is required' },
+        { error: 'Either profileId, longDescription, or prompt is required' },
         { status: 400 }
       );
     }
@@ -86,13 +81,23 @@ export async function POST(request: NextRequest) {
               content: [
                 {
                   type: "text",
-                  text: `从以下标签中选择2-3个最相关的标签：${tagList}
+                  text: `请分析以下用户描述，并返回一个JSON对象，包含两个字段：
+1. tags: 从以下标签列表中选择2-3个最相关的标签
+标签列表：${tagList}
 
-基于用户描述，选择最合适的标签。
-返回格式：["tag1", "tag2"]
+2. strategy: 生成一段送礼策略建议，包括：
+- 对方是什么样的人
+- 他们可能喜欢什么
+- 当前季节适合送什么
+- 其他相关建议
 
-用户描述：
-${userDescription}`
+请确保返回格式严格如下：
+{
+  "tags": ["tag1", "tag2"],
+  "strategy": "建议内容..."
+}
+
+用户描述：${userDescription}`
                 }
               ]
             }
@@ -107,8 +112,26 @@ ${userDescription}`
     }
 
     const analysisData = await analysisResponse.json();
-    const selectedTags = JSON.parse(analysisData.choices[0].message.content);
+    console.log('AI response:', analysisData.choices[0].message.content);
+    
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(analysisData.choices[0].message.content);
+    } catch (error) {
+      console.error('Failed to parse AI response:', error);
+      console.log('Raw AI response:', analysisData.choices[0].message.content);
+      throw new Error('Invalid AI response format');
+    }
+
+    if (!aiResponse.tags || !Array.isArray(aiResponse.tags) || !aiResponse.strategy) {
+      console.error('Invalid AI response structure:', aiResponse);
+      throw new Error('Invalid AI response structure');
+    }
+
+    const selectedTags = aiResponse.tags;
+    const giftStrategy = aiResponse.strategy;
     console.log('选中的标签:', selectedTags);
+    console.log('送礼策略:', giftStrategy);
 
     // 获取标签ID
     const { data: tagIds, error: tagError } = await supabase
@@ -136,7 +159,8 @@ ${userDescription}`
       return NextResponse.json({
         success: true,
         gifts: [],
-        tags: selectedTags
+        tags: selectedTags,
+        strategy: giftStrategy
       });
     }
 
@@ -156,7 +180,8 @@ ${userDescription}`
       return NextResponse.json({
         success: true,
         gifts: [],
-        tags: selectedTags
+        tags: selectedTags,
+        strategy: giftStrategy
       });
     }
 
@@ -170,7 +195,8 @@ ${userDescription}`
     return NextResponse.json({
       success: true,
       gifts: sortedGifts,
-      tags: selectedTags
+      tags: selectedTags,
+      strategy: giftStrategy
     });
   } catch (error) {
     console.error('Error getting gift recommendations:', error);
