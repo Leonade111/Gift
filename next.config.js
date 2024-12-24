@@ -11,12 +11,15 @@ const nextConfig = {
       'via.placeholder.com',
       'assets.website-files.com',
       'images.unsplash.com',
-      'source.unsplash.com'
+      'source.unsplash.com',
+      'xsgames.co'
     ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '*',
+        port: '',
+        pathname: '**',
       },
     ],
   },
