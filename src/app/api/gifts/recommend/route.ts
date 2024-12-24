@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// 定义类型
-type GiftItem = {
-  gift_id: number;
-  gift_name: string;
-  gift_price: number | null;
-  img_url: string | null;
-}
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

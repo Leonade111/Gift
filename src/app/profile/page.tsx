@@ -172,21 +172,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteProfile = async (profile: Profile) => {
-    if (!profile) return;
-
+  const handleDeleteProfile = async (profileId: number) => {
     try {
+      // 找到要删除的profile
+      const profileToDelete = profiles.find(p => p.id === profileId);
+      if (!profileToDelete) return;
+
       // 立即从本地状态中移除用户
-      const newProfiles = profiles.filter((p) => p.id !== profile.id);
+      const newProfiles = profiles.filter((p) => p.id !== profileId);
       setProfiles(newProfiles);
       
       // 如果删除的是当前选中的用户，选择新的用户或设置为undefined
-      if (selectedProfile?.id === profile.id) {
+      if (selectedProfile?.id === profileId) {
         setSelectedProfile(newProfiles.length > 0 ? newProfiles[0] : undefined);
       }
 
       // 调用删除API
-      const response = await fetch(`/api/user/profile?user_id=${encodeURIComponent(profile.id)}`, {
+      const response = await fetch(`/api/user/profile?user_id=${encodeURIComponent(profileId)}`, {
         method: 'DELETE',
       });
 

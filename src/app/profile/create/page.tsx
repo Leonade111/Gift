@@ -106,6 +106,12 @@ const CreateProfile = () => {
     fetchQuestion(0, []);
   }, [fetchQuestion]);
 
+  useEffect(() => {
+    if (isComplete) {
+      router.push('/profile/profileList');
+    }
+  }, [isComplete, router]);
+
   const renderError = () => {
     if (!error) return null;
     return (

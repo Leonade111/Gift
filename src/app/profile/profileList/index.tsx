@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 
 interface Profile {
   id: number;  // 支持数字类型的ID
@@ -15,7 +14,7 @@ interface ProfileListProps {
   onProfileSelect: (profile: Profile | undefined) => void;
   onAddProfile: () => void;
   onEditProfile: (profile: Profile) => void;
-  onDeleteProfile: (profile: Profile) => void;
+  onDeleteProfile: (profileId: number) => void;
 }
 
 export default function ProfileList({
@@ -26,7 +25,6 @@ export default function ProfileList({
   onEditProfile,
   onDeleteProfile,
 }: ProfileListProps) {
-  const router = useRouter();
 
   const handleAddClick = () => {
     onAddProfile();
@@ -36,29 +34,11 @@ export default function ProfileList({
     onEditProfile(profile);
   };
 
-  const handleDeleteClick = async (profile: Profile) => {
-    if (window.confirm(`确定要删除用户 ${profile.name} 吗？`)) {
-      try {
-        const response = await fetch(`/api/user/profile?user_id=${encodeURIComponent(profile.id)}`, {
-          method: 'DELETE',
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to delete profile');
-        }
-
-        if (data.success) {
-          // 通知父组件处理删除
-          onDeleteProfile(profile);
-        } else {
-          throw new Error(data.error || '删除失败');
-        }
-      } catch (error) {
-        console.error('Error deleting profile:', error);
-        alert(error instanceof Error ? error.message : '删除失败，请稍后重试');
-      }
+  const handleDeleteClick = async (profileId: number) => {
+    try {
+      await onDeleteProfile(profileId);
+    } catch (error) {
+      console.error('Error deleting profile:', error);
     }
   };
 
@@ -131,7 +111,7 @@ export default function ProfileList({
                   </svg>
                 </button>
                 <button
-                  onClick={(e) => handleDeleteClick(profile)}
+                  onClick={() => handleDeleteClick(profile.id)}
                   className="text-red-600 hover:text-red-800 p-1"
                 >
                   <svg

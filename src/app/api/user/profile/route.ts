@@ -12,14 +12,6 @@ const supabase = createClient(
   }
 );
 
-interface GiftItem {
-  gift_id: number;
-  gift_name: string;
-  gift_price: number;
-  img_url: string;
-  created_at: string;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,18 +25,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取用户档案
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('long_description')
-      .eq('id', userId)
+      .select('*')
+      .eq('user_id', userId)
       .single();
 
-    if (profileError) {
-      console.error('获取用户档案失败:', profileError);
-      return NextResponse.json(
-        { error: '获取用户档案失败' },
-        { status: 500 }
-      );
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
     // 根据用户描述获取推荐礼物

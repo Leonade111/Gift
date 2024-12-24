@@ -10,17 +10,17 @@ interface Item {
   gift_name: string;
   gift_price: number;
   img_url: string;
-  tag_id: string;
+  created_at: string;
+  tags: string[];
 }
 
 export default function MainPage() {
   const [giftRequest, setGiftRequest] = useState("");
   const [searchItems, setSearchItems] = useState<Item[]>([]);
-  const [defaultItems, setDefaultItems] = useState<Item[]>([]); // 默认商品状态
+  const [defaultItems, setDefaultItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [giftStrategy, setGiftStrategy] = useState("");
 
   // 获取默认商品数据
   useEffect(() => {
@@ -44,67 +44,81 @@ export default function MainPage() {
 
   // 搜索事件处理
   const handleSearch = async () => {
+    if (!giftRequest.trim()) return;
+
     try {
       setIsLoading(true);
-      setHasSearched(false); // 重置搜索状态，不立即显示结果
-      setCurrentPage(1); // 重置页码
-      
-      // 获取推荐的tag_ids
-      const recommendResponse = await fetch("/api/recommend", {
+      setHasSearched(false);
+
+      const response = await fetch("/api/gifts/prompt-recommend", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt: giftRequest,
-        }),
+        body: JSON.stringify({ prompt: giftRequest }),
       });
-      const recommendResult = await recommendResponse.json();
-      console.log("Recommend API response:", recommendResult);
-      
-      if (recommendResult.tagIds && recommendResult.tagIds.length > 0) {
-        // 获取所有推荐标签的礼物
-        const allItems: Item[] = [];
-        for (const tagId of recommendResult.tagIds) {
-          const itemsResponse = await fetch(`/api/category_item?tag_id=${tagId}&page=1`);
-          const data = await itemsResponse.json();
-          if (data.items && Array.isArray(data.items)) {
-            allItems.push(...data.items);
-          }
+
+      const result = await response.json();
+      console.log("API Response:", result);
+
+      if (result.success) {
+        if (Array.isArray(result.gifts)) {
+          const formattedItems = result.gifts.map((gift: any) => ({
+            gift_id: gift.gift_id?.toString() || '',
+            gift_name: gift.gift_name || '',
+            gift_price: Number(gift.gift_price) || 0,
+            img_url: gift.img_url || '',
+            created_at: gift.created_at || '',
+            tags: Array.isArray(gift.tags) ? gift.tags.filter(Boolean) : []
+          }));
+          setSearchItems(formattedItems);
         }
-        
-        // 去重（如果需要）
-        const uniqueItems = Array.from(new Map(allItems.map(item => [item.gift_id, item])).values());
-        setSearchItems(uniqueItems);
-        setTotalPages(Math.ceil(uniqueItems.length / 9)); // 假设每页显示9个商品
+        if (result.strategy) {
+          setGiftStrategy(result.strategy);
+        }
+      } else {
+        setSearchItems([]);
+        setGiftStrategy("");
       }
-      
-      setHasSearched(true); // 在所有处理完成后才设置搜索状态
     } catch (error) {
-      console.error("Failed to search:", error);
-      setHasSearched(true); // 发生错误时也要设置搜索状态
-      setSearchItems([]); // 清空搜索结果
+      console.error("Search failed:", error);
+      setSearchItems([]);
+      setGiftStrategy("");
     } finally {
       setIsLoading(false);
+      setHasSearched(true);
     }
   };
 
-  // 处理页面变化
-  const handlePageChange = async (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
-    
-    try {
-      setIsLoading(true);
-      const itemsResponse = await fetch(`/api/category_item?tag_id=${searchItems[0]?.tag_id}&page=${newPage}`);
-      const data = await itemsResponse.json();
-      setSearchItems(data.items);
-      setCurrentPage(newPage);
-    } catch (error) {
-      console.error("Failed to fetch page:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 渲染商品卡片
+  const renderGiftCard = (item: Item) => (
+    <div
+      key={item.gift_id}
+      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+    >
+      <div className="relative h-64">
+        <img
+          src={item.img_url || '/placeholder-image.jpg'}
+          alt={item.gift_name}
+          className="w-full h-full object-contain p-4"
+        />
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.gift_name}</h3>
+        <p className="text-gray-600 mb-4">${item.gift_price.toFixed(2)}</p>
+        <div className="flex flex-wrap gap-2">
+          {Array.isArray(item.tags) && item.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
@@ -178,80 +192,50 @@ export default function MainPage() {
 
         {/* 商品展示区域 */}
         <div className="max-w-7xl mx-auto px-6">
-          {/* 搜索结果 */}
-          {hasSearched ? (
-            <div className="mb-16">
-              <h2 className="text-3xl font-bold mb-8 text-center">
-                {searchItems.length > 0 ? 'Recommended Gifts' : 'No gifts found. Try another description!'}
-              </h2>
-              {searchItems.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {searchItems.map((item) => (
-                    <div
-                      key={item.gift_id}
-                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                    >
-                      <div className="relative h-64">
-                        <img
-                          src={item.img_url}
-                          alt={item.gift_name}
-                          className="w-full h-full object-contain p-4"
-                        />
-                      </div>
-                      <div className="p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                          {item.gift_name}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xl font-bold text-orange-600">
-                            ￥{item.gift_price.toLocaleString()}
-                          </p>
-                          <button className="text-sm px-4 py-2 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors duration-300">
-                            View Details
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          {hasSearched && (
+            <>
+              {/* 送礼策略 */}
+              {giftStrategy && (
+                <div className="mb-8 bg-white rounded-xl p-6 shadow-md">
+                  <div className="flex items-center gap-3 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <h3 className="text-xl font-bold text-gray-900">Gift Selection Tips</h3>
+                  </div>
+                  <div className="text-gray-600 leading-relaxed">
+                    {giftStrategy.split('\n').map((paragraph, index) => (
+                      paragraph.trim() && (
+                        <p key={index} className="mb-2 last:mb-0">
+                          {paragraph}
+                        </p>
+                      )
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
-          ) : (
-            // 默认商品展示
-            !isLoading && defaultItems.length > 0 && (
-              <div>
-                <h2 className="text-3xl font-bold mb-8 text-center">Popular Gifts</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {defaultItems.map((item) => (
-                    <div
-                      key={item.gift_id}
-                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                    >
-                      <div className="relative h-64">
-                        <img
-                          src={item.img_url}
-                          alt={item.gift_name}
-                          className="w-full h-full object-contain p-4"
-                        />
-                      </div>
-                      <div className="p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                          {item.gift_name}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xl font-bold text-orange-600">
-                            ￥{item.gift_price.toLocaleString()}
-                          </p>
-                          <button className="text-sm px-4 py-2 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors duration-300">
-                            View Details
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+              {/* 礼物列表 */}
+              <div className="mb-16">
+                <h2 className="text-3xl font-bold mb-8 text-center">
+                  {searchItems.length > 0 ? 'Recommended Gifts' : 'No gifts found. Try another description!'}
+                </h2>
+                {searchItems.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {searchItems.map(renderGiftCard)}
+                  </div>
+                )}
               </div>
-            )
+            </>
+          )}
+          
+          {!hasSearched && (
+            <div className="mb-16">
+              <h2 className="text-3xl font-bold mb-8 text-center">Popular Gifts</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {defaultItems.map(renderGiftCard)}
+              </div>
+            </div>
           )}
         </div>
       </div>
