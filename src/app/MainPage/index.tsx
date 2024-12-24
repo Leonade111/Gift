@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function MainPage() {
   return (
@@ -43,9 +44,11 @@ export default function MainPage() {
             {/* Right Column - Image */}
             <div className="relative lg:block">
               <div className="relative w-full h-[400px] lg:h-[500px]">
-                <img
+                <Image
                   src="/images/gift.png"
                   alt="Gift Box"
+                  width={500}
+                  height={500}
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               </div>

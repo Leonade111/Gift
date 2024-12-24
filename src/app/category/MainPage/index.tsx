@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from 'next/image';
 import Footer from "@/app/footer";
 
 // 定义Category接口
@@ -135,9 +136,11 @@ export default function MainPage() {
                       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                     >
                       <div className="relative h-64">
-                        <img
+                        <Image
                           src={item.img_url}
                           alt={item.gift_name}
+                          width={300}
+                          height={256}
                           className="w-full h-full object-contain p-4"
                         />
                       </div>

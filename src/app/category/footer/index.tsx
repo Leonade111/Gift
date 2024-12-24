@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function Footer() {
   return (
     <footer className="bg-yellow-100 text-gray-800 py-12 mt-auto">
@@ -5,9 +7,11 @@ export default function Footer() {
         {/* 商标部分，添加背景颜色和圆角效果 */}
         <div className="text-center mb-8">
           <div className="inline-block bg-gray-200 p-4 rounded-full">
-            <img
+            <Image
               src="https://assets.website-files.com/6458c625291a94a195e6cf3a/6458c625291a94d6f4e6cf96_Group%2047874-3.png"
               alt="Logo"
+              width={48}
+              height={48}
               className="max-h-12 mx-auto"
             />
           </div>
@@ -51,7 +55,7 @@ export default function Footer() {
         <div className="mb-8 mt-8 border-b border-gray-400 w-32 mx-auto"></div>
 
         {/* 版权部分 */}
-        <p className="text-sm text-gray-500 text-center">© 2024 Leo Company. All rights reserved.</p>
+        <p className="text-sm text-gray-500 text-center"> 2024 Leo Company. All rights reserved.</p>
       </div>
     </footer>
   );

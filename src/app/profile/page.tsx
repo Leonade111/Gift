@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ProfileList from "./profileList";
 import Link from 'next/link';
 import Footer from "@/app/footer";
+import Image from 'next/image';
 
 interface Profile {
   id: number;
@@ -324,9 +325,11 @@ export default function ProfilePage() {
                           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
                         >
                           <div className="aspect-w-1 aspect-h-1">
-                            <img
+                            <Image
                               src={gift.img_url || '/placeholder.jpg'}
                               alt={gift.gift_name}
+                              width={300}
+                              height={256}
                               className="w-full h-64 object-contain p-4"
                             />
                           </div>

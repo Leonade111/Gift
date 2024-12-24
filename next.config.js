@@ -7,7 +7,18 @@ const nextConfig = {
   },
   reactStrictMode: true,
   images: {
-    domains: ['via.placeholder.com'], // 添加你允许的图片域名
+    domains: [
+      'via.placeholder.com',
+      'assets.website-files.com',
+      'images.unsplash.com',
+      'source.unsplash.com'
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 }
 
